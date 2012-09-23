@@ -469,3 +469,7 @@ var buildChurch = function(n){
 	DRAW(c);
 
 };
+
+var planCornerSection = function(){
+	DRAW(planSection(1));
+}
