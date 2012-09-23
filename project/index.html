@@ -33,7 +33,16 @@
     p = new Plasm('plasm', 'plasm-inspector');
     fun.PLASM(p);
   </script>
-  <script src="testProject.js"></script>
+  <script src="testProject.js">
+    (function(){
+        var q = window.location.search.substring(7);
+        if(q !== "") {
+          console.log(q);
+          var fun = window[fun];
+          fun();
+        }
+      })();
+    </script>
 
   <script>
     console.log('...');
@@ -70,13 +79,7 @@
   </script>
 
   <script type="text/javascript">
-    (function(){
-      var q = window.location.search.substring(7);
-      if(q !== "") {
-          var fun = window[fun];
-          fun();
-      }
-    })();
+    
   </script>
 </body>
 </html>
