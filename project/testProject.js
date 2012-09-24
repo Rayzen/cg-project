@@ -10,7 +10,10 @@ console.log('test');
 //
 //  return url;
 //};
-
+var palette = {
+	white: [1.2,1.2,1.2,1],
+	brick: [0.56,0.14,0.14,1]
+};
 var domA = INTERVALS(1)(16);
 var domB = INTERVALS(1)(8);
 var dom2d = DOMAIN([
@@ -40,7 +43,6 @@ var churchPlan = function(r){
 		chapBasement = BOUNDARY(chapBasement);
 		chapBasements = STRUCT(REPLICA(4)([chapBasement,R([0,1])(PI/2)]));
 		octP1 = STRUCT([octP1,chapBasements]).scale([2],[-1]);
-		octP1 = octP1.color([0.8,0.5,0.2,1]);
 		return STRUCT([octP1]);
 	};
 };
@@ -134,19 +136,26 @@ var domeTrave = function(r){
 		var sup1 = MAP(s1)(domeDomain);
 		var sup2 = MAP(s2)(domeDomain);
 		var sup3 = MAP(s3)(domeDomain);
-		return STRUCT([sup1,sup2,sup3]).rotate([0,1],-PI/4);
+		return STRUCT([sup1,sup2,sup3]).rotate([0,1],-PI/8);
 
 	};
 };
 
-var drawDome = function(r,n,l){
+var oldDrawDome = function(r,n,l){
 	var db = domeBase(r)(n)(l);
 	var dt1 = domeTrave(r)(n);
-	var dc1= campanile(r).translate([2], [r]);
+	var dc1= roofLantern(r).translate([2], [r]);
 	var dc = STRUCT(REPLICA(l)([dc1,R([0,1])(-PI/4)]));
 	dt1 = dt1.rotate([0,1],PI/8);
-	dt1 = dt1.color([0.8,0.5,0.2,1]);
+	//dt1 = dt1.color([0.8,0.5,0.2,1]);
 	var dt = STRUCT(REPLICA(l)([dt1,R([0,1])(-PI/4)]));
+	return STRUCT([db,dt,dc]);
+};
+/* drawDome beta*/
+var domeSection = function(r,n,l){
+	var db = domeBaseStripe(r)(n).color(palette.brick);
+	var dt = domeTrave(r)(n);
+	var dc= roofLantern(r).translate([2], [r]);
 	return STRUCT([db,dt,dc]);
 };
 
@@ -178,10 +187,10 @@ var doorA = function(r){
 	var wB1 = SIMPLEX_GRID([[-l/6,5/6*l],[-0.04,0.02,-0.04],[-l,0.01]]);
 	var wC = SIMPLEX_GRID([[-l/6,(l - (l/2)*COS(PI/6))],[-0.04,0.02,-0.04],[-l,5/6*l]]);
 
-	wA.color([0.999999,0.999999,0.999999,1]);
-	wB0.color([0.999999,0.999999,0.999999,1]);
-	wB1.color([0.999999,0.999999,0.999999,1]);
-	wC.color([0.999999,0.999999,0.999999,1]);
+	wA.color(palette.white);
+	wB0.color(palette.white);
+	wB1.color(palette.white);
+	wC.color(palette.white);
 
 	var tA = SIMPLICIAL_COMPLEX([
 									[(lA/2)*COS(PI/6),0],
@@ -209,7 +218,7 @@ var doorA = function(r){
 								[0,1,2]
 							]);
 
-	tC = COLOR([1,1,1,0.7])(tC);
+	tC = tC.color([1,1,1,0.7]);
 	tC = tC.translate([0,1],[(l - (lA/2)*COS(PI/6)),l+0.01]);
 	tC = STRUCT([tC,wB0]);
 	tC = tC.extrude([.02]);
@@ -225,8 +234,6 @@ var doorB = function(r){
 	var l = r*SIN(PI/8);
 	var a = r*COS(PI/8);
 
-	// var c01 = CUBIC_HERMITE(S0)([[-l/4*3.18,0],[-l,5/6*l],[0,PI/2*l],[-PI/6*l,0]]);
-	// var c02 = CUBIC_HERMITE(S0)();
 	var c01 = CUBIC_HERMITE(S0)([[-l/4*3,0],[-l/4*3,5/6*l],[0,0],[0,0]]);
 	var c02 = CUBIC_HERMITE(S0)([[-l/4*3,5/6*l],[-l,13/12*l],[0,PI/2*l/4],[-PI/2*l/4,0]]);
 
@@ -239,7 +246,7 @@ var doorB = function(r){
 
 	s = EXTRUDE([.1*r])(s).rotate([1,2],PI/2);
 	s.material = new plasm.materials.LineMaterial();
-	s.color([0.999999,0.999999,0.999999,1]);
+	s.color(palette.white);
 	return s;
 
 };
@@ -249,7 +256,7 @@ var cornerSection3d = function(r){
 	var a = r*COS(PI/8);
 
 	var dA = doorA(r);
-	var axisA = cornerAxis(PI/8);
+	var axisA = cornerAxis(PI/8,r);
 	axisA = axisA.extrude([11/6*l]);
 	dA = STRUCT([dA,axisA]);
 
@@ -269,18 +276,6 @@ var cornerSection3d = function(r){
 	var intermediateSection = BOUNDARY(octagonalRingSection(r,PI/8).extrude([.05]).translate([2],[11/6*l]));
 
 	var halfChapelLV1 = chapWall(r,PI/4).translate([0,1],[-l+.05,-2*a+.1]);
-	var halfChapelLV2 = chapWalls(r*.3)(4)(PI/8).scale([2],[1.5]).rotate([0,1],-3/4*PI).translate([1,2],[-a-r*.525,11/6*l+.05]);
-	var halfChapelLV2Ring = STRUCT(REPLICA(4)([octagonalRingCorner(r*.3)(0.5).extrude([.05]), R([0,1])([-PI/4])])).translate([1,2],[-a-r*.525,11/6*l+.05+1.5*11/6*(r*.3)*SIN(PI/8)]);
-	var halfChapelLV2Dome = drawDome(r*.35,8,4).translate([1,2],[-a-r*.525,11/6*l+.05+1.5*11/6*(r*.3)*SIN(PI/8)+.05]);
-
-	var halfChapel = STRUCT([halfChapelLV1,halfChapelLV2,halfChapelLV2Ring,halfChapelLV2Dome]);
-
-	var centralChapelWalls = chapWalls(r)(1)(PI/8).translate([2],[11/6*l]);
-	var centralChapelRing = octagonalRingCorner(r)(0.2).extrude([.1]).translate([2],[11/3*l]);
-	var centralChapelDome = drawDome(r*1.1,8,1).translate([2],[11/3*l+.1]);
-	//var centralChapelCamp = campanile(r).translate([2], [11/3*l+.1+r*1.1]);
-
-	var centralChapel = STRUCT([centralChapelWalls, centralChapelRing, centralChapelDome]);
 	
 	var corner = STRUCT([dA,dB]);
 	corner = corner.translate([0,1],[-l,-a]).scale([0],[-1]).rotate([0,1],-PI/4);
@@ -288,7 +283,7 @@ var cornerSection3d = function(r){
 
 	var column = BOUNDARY(DISK([0.05*r])().extrude([11/6*l]).translate([0,1],[-r*0.8*SIN(PI/8),-r*0.8*COS(PI/8)]));
 
-	return STRUCT([corner,column,intermediateSection,halfChapel,centralChapel]);
+	return STRUCT([corner,column,intermediateSection,halfChapelLV1]);
 
 };
 
@@ -301,52 +296,52 @@ var centralPlan3d = function(r){
 	};
 };
 
-var cornerAxis = function(ang){
+var cornerAxis = function(ang,r){
 		return SIMPLICIAL_COMPLEX([
 									[0,0],
-									[0,-.1],
-									[-.1/COS(ang)*SIN(ang),-.1]
+									[0,-.1*r],
+									[-.1/COS(ang)*SIN(ang)*r,-.1*r]
 								])([
 									[0,1,2]
 								]);
 };
 
-var halfChapWall = function(r,a){
-	var l = r*SIN(PI/8);
+// var halfChapWall = function(r,a){
+// 	var l = r*SIN(PI/8);
 	
-	var seg00 = SIMPLEX_GRID([[l/6],[.1],[-l/6,5*l/3,-l/6]]);
-	var seg01 = SIMPLEX_GRID([[-l/2,l/6],[.1],[-2/3*l,2*l/3,-2/3*l]]);
-	var seg10 = SIMPLEX_GRID([[l],[.1],[l/6,-9*l/6,l/6]]);
-	var seg11 = SIMPLEX_GRID([[-l/2,l/2],[.1],[-l/2,l/6,-2*l/3,l/6,-l/2]]);
-	var seg12 = SIMPLEX_GRID([[-l/6,5/6*l],[-.04,.02,-.04],[-l/6,5*l/3,-l/6]]).color([0.999999,0.999999,0.999999,1]);;
+// 	var seg00 = SIMPLEX_GRID([[l/6],[.1],[-l/6,5*l/3,-l/6]]);
+// 	var seg01 = SIMPLEX_GRID([[-l/2,l/6],[.1],[-2/3*l,2*l/3,-2/3*l]]);
+// 	var seg10 = SIMPLEX_GRID([[l],[.1],[l/6,-9*l/6,l/6]]);
+// 	var seg11 = SIMPLEX_GRID([[-l/2,l/2],[.1],[-l/2,l/6,-2*l/3,l/6,-l/2]]);
+// 	var seg12 = SIMPLEX_GRID([[-l/6,5/6*l],[-.04,.02,-.04],[-l/6,5*l/3,-l/6]]).color(palette.white);;
 
-	var wall = STRUCT([seg00,seg01,seg10,seg11,seg12]);
+// 	var wall = STRUCT([seg00,seg01,seg10,seg11,seg12]);
 
-	wall = wall.translate([1],[-.1]);
+// 	wall = wall.translate([1],[-.1]);
 	
-	return wall;
-};
+// 	return wall;
+// };
 
-var chapWall = function(r,a){
-	var w0 = STRUCT([halfChapWall(r,a),cornerAxis(a).extrude([11/6*r*SIN(PI/8)])]);
-	var w1 = S([0])([-1])(w0).rotate([0,1],-a*2);
-	var w2 = halfChapWall(r,a).scale([0],[-1]).rotate([0,1],PI/2).translate([0,1],[-.1,2*r*SIN(PI/8)]);
-	return STRUCT([w0,w1,w2]);
-}
+// var chapWall = function(r,a){
+// 	var w0 = STRUCT([halfChapWall(r,a),cornerAxis(a,r).extrude([11/6*r*SIN(PI/8)])]);
+// 	var w1 = S([0])([-1])(w0).rotate([0,1],-a*2);
+// 	var w2 = halfChapWall(r,a).scale([0],[-1]).rotate([0,1],PI/2).translate([0,1],[-.1,2*r*SIN(PI/8)]);
+// 	return STRUCT([w0,w1,w2]);
+// }
 
-var chapWalls = function(r){
-	return function(n){
-		return function(a){
-			var w0 = STRUCT([halfChapWall(r,a),cornerAxis(a).extrude([11/6*r*SIN(PI/8)])]);
-			var w1 = S([0])([-1])(w0).rotate([0,1],-a*2);
+// var chapWalls = function(r){
+// 	return function(n){
+// 		return function(a){
+// 			var w0 = STRUCT([halfChapWall(r,a),cornerAxis(a,r).extrude([11/6*r*SIN(PI/8)])]);
+// 			var w1 = S([0])([-1])(w0).rotate([0,1],-a*2);
 
-			var w = STRUCT([w0,w1]).translate([0,1],[-r*SIN(a),-r*COS(a)]);
+// 			var w = STRUCT([w0,w1]).translate([0,1],[-r*SIN(a),-r*COS(a)]);
 
-			return STRUCT(REPLICA(n)([w, R([0,1])(a*2)]));
+// 			return STRUCT(REPLICA(n)([w, R([0,1])(a*2)]));
 
-		};
-	};
-};
+// 		};
+// 	};
+// };
 
 var octagonalRingSection = function(r,a){
 	var l = r*SIN(PI/8);
@@ -417,13 +412,13 @@ var octagonalRingCorner = function(r){
 
 
 /* Roof lantern */
-var campanile = function(r){
-	var d0 = doorB(r);
+var roofLantern = function(r){
+	var d0 = doorB(r).color(palette.white);
 	var d1 = S([0])([-1])(d0).rotate([0,1],PI/4);
 
 	var d = STRUCT([d0,d1]).rotate([0,1],-PI/4);
 
-	var ax01 = cornerAxis(PI/8).extrude([r*SIN(PI/8)*11/6]);
+	var ax01 = cornerAxis(PI/8,r).extrude([r*SIN(PI/8)*11/6]);
 	var ax02 = S([0])([-1])(ax01).rotate([0,1],-PI/4);
 
 	var dax = STRUCT([d,ax01,ax02]);
@@ -435,7 +430,7 @@ var campanile = function(r){
 	var ap0 = SIMPLICIAL_COMPLEX([[0,0,.25*r+0.25*11/6*r*SIN(PI/8)+.005*r],[0,-.105*r*COS(PI/8),0.25*11/6*r*SIN(PI/8)+.005*r],[-.105*r*SIN(PI/8),-.105*r*COS(PI/8),0.25*11/6*r*SIN(PI/8)+.005*r]])([[0,1,2]]);
 	var ap1 = S([0])([-1])(ap0).rotate([0,1],-PI/4);
 
-	var ap = STRUCT([ap0,ap1]);
+	var ap = STRUCT([ap0,ap1]).color(palette.brick);
 
 	var camp = STRUCT([dax,ring,ap]);
 
@@ -470,6 +465,123 @@ var buildChurch = function(n){
 
 };
 
+var halfChapWall = function(r,a){
+	var l = r*SIN(PI/8);
+	
+	var seg01 = SIMPLEX_GRID([[-l/3,l/6],[.1],[-2/3*l,2*l/3,-2/3*l]]);
+	var seg10 = SIMPLEX_GRID([[.88*l],[.1],[l/6,-9*l/6,l/6]]);
+	var seg11 = SIMPLEX_GRID([[-l/3,.55*l],[.1],[-l/2,l/6,-2*l/3,l/6,-l/2]]);
+	var seg12 = SIMPLEX_GRID([[.88*l],[-.04,.02,-.04],[-l/6,9*l/6,-l/6]]).color(palette.white);;
+
+	var wall = STRUCT([seg01,seg10,seg11,seg12]);
+
+	wall = wall.translate([1],[-.1]);
+	
+	return wall;
+};
+
+var chapWall = function(r,a){
+	var l = r*SIN(PI/8);
+	var w0 = STRUCT([halfChapWall(r,a),cornerAxis(a,r).extrude([11/6*r*SIN(PI/8)])]);
+	var w1 = S([0])([-1])(w0).rotate([0,1],-a*2);
+	var w2 = halfChapWall(r,a);
+	var col = SIMPLEX_GRID([[.25*l],[.1],[11*l/6]]).translate([0,1],[-.25*l,-.1]);
+	w2 = STRUCT([w2,col]).scale([0],[-1]).rotate([0,1],PI/2).translate([0,1],[-.1,5*l/3]);
+	return STRUCT([w0,w1,w2]);
+}
+
+var chapWalls = function(r){
+	return function(a){
+		var w0 = halfChapWall(r,a).scale([0],[1.15]);
+		var w1 = STRUCT([w0,cornerAxis(a,r).extrude([11/6*r*SIN(PI/8)])]);
+		var w2 = S([0])([-1])(w1).rotate([0,1],-a*2);
+
+		return STRUCT([w2,w1]).translate([0,1],[-r*SIN(a),-r*COS(a)]);
+
+
+	};
+};
+
+var chapelDome = function(r){
+	var l = r*SIN(PI/8);
+	var a = r*COS(PI/8);
+
+	var halfChapelLV2 = chapWalls(r*.3)(PI/8).scale([2],[1.5]).translate([2],[11/6*l+.05]);
+	var halfChapelLV2Ring = octagonalRingCorner(r*.3)(0.5).extrude([.05]).translate([2],[11/6*l+.05+1.5*11/6*(r*.3)*SIN(PI/8)]);
+	var halfChapelLV2Dome = domeSection(r*.35,8,4).translate([2],[11/6*l+.05+1.5*11/6*(r*.3)*SIN(PI/8)+.05]);
+
+	var halfChapel = STRUCT([halfChapelLV2,halfChapelLV2Ring,halfChapelLV2Dome]);
+
+	return STRUCT(REPLICA(4)([halfChapel,R([0,1])([-PI/4])])).translate([1],[-a-r*.525]);
+
+};
+
+var centralDomeSection = function(r){
+	var l = r*SIN(PI/8);
+	var a = r*COS(PI/8);
+
+	var centralChapelWallSection = chapWalls(r)(PI/8);
+	var centralChapelRingSection = octagonalRingCorner(r)(0.2).extrude([.1]).translate([2],[11/6*l]);
+	var centralDomeSection = domeSection(r*1.1,8,1).translate([2],[11/6*l+.1]);
+	return STRUCT([centralChapelWallSection,centralDomeSection,centralChapelRingSection]);
+}
+
+var centralDome = function(r,n){
+	return STRUCT(REPLICA(n)([centralDomeSection(r),R([0,1])([-PI/4])]));
+}
+
+/* Project page drawing functions */
 var planCornerSection = function(){
 	DRAW(planSection(1));
-}
+};
+
+var completePlan = function(){
+	DRAW(centralPlan(1)(4));
+};
+
+var lowerLevelCornerSection = function(){
+	DRAW(cornerSection3d(1));
+};
+
+var completeLowerLevel = function(){
+	var c01 = cornerSection3d(1);
+	var c02 = S([0])([-1])(c01).rotate([0,1],-PI/2);
+	var c = STRUCT([c01,c02]);
+	c = STRUCT(REPLICA(4)([c,R([0,1])(PI/2)]));
+	DRAW(c)
+};
+
+var drawDomeSection = function(){
+	DRAW(centralDomeSection(1));
+};
+
+var drawDomeComplete = function(){
+	DRAW(centralDome(1,8));
+};
+
+var complete3dCornerSection = function(r){
+	var l = r*SIN(PI/8);
+	var a = r*COS(PI/8);
+
+	var c = cornerSection3d(r);
+	var chap = chapelDome(r);
+	var cDome = centralDomeSection(r).translate([2],[11*l/6]);
+
+	return STRUCT([c, chap, cDome]);
+};
+
+var complete3dChurch = function(r,n){
+	var c0 = complete3dCornerSection(r);
+	var c1 = S([0])([-1])(c0).rotate([0,1],[-PI/2]);
+
+	var c = STRUCT([c0,c1]);
+	return STRUCT(REPLICA(n)([c, R([0,1])([-PI/2])]));
+};
+
+var churchCornerSection = function(){
+	DRAW(complete3dCornerSection(1));
+};
+
+var completeChurch = function(){
+	DRAW(complete3dChurch(1,4));
+};
