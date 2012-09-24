@@ -141,17 +141,6 @@ var domeTrave = function(r){
 	};
 };
 
-var oldDrawDome = function(r,n,l){
-	var db = domeBase(r)(n)(l);
-	var dt1 = domeTrave(r)(n);
-	var dc1= roofLantern(r).translate([2], [r]);
-	var dc = STRUCT(REPLICA(l)([dc1,R([0,1])(-PI/4)]));
-	dt1 = dt1.rotate([0,1],PI/8);
-	//dt1 = dt1.color([0.8,0.5,0.2,1]);
-	var dt = STRUCT(REPLICA(l)([dt1,R([0,1])(-PI/4)]));
-	return STRUCT([db,dt,dc]);
-};
-/* drawDome beta*/
 var domeSection = function(r,n,l){
 	var db = domeBaseStripe(r)(n).color(palette.brick);
 	var dt = domeTrave(r)(n);
@@ -437,20 +426,6 @@ var roofLantern = function(r){
 	return camp;
 };
 
-var drawAll = function(){
-	var a = centralPlan3d(2.5)(4);
-	var b = plan2d(2.5);
-	DRAW(a);
-	DRAW(b);
-};
-
-var draw3dSection = function(){
-
-	var c = cornerSection3d(1);
-
-	DRAW(c);
-};
-
 var buildChurch = function(n){
 	var a = multiLevelChurchPlan(3)(churchPlan(1.25)(.1));
 	var b = centralPlan(1)(4);
@@ -524,11 +499,30 @@ var centralDomeSection = function(r){
 	var centralChapelRingSection = octagonalRingCorner(r)(0.2).extrude([.1]).translate([2],[11/6*l]);
 	var centralDomeSection = domeSection(r*1.1,8,1).translate([2],[11/6*l+.1]);
 	return STRUCT([centralChapelWallSection,centralDomeSection,centralChapelRingSection]);
-}
+};
 
 var centralDome = function(r,n){
 	return STRUCT(REPLICA(n)([centralDomeSection(r),R([0,1])([-PI/4])]));
-}
+};
+
+var complete3dCornerSection = function(r){
+	var l = r*SIN(PI/8);
+	var a = r*COS(PI/8);
+
+	var c = cornerSection3d(r);
+	var chap = chapelDome(r);
+	var cDome = centralDomeSection(r).translate([2],[11*l/6]);
+
+	return STRUCT([c, chap, cDome]);
+};
+
+var complete3dChurch = function(r,n){
+	var c0 = complete3dCornerSection(r);
+	var c1 = S([0])([-1])(c0).rotate([0,1],[-PI/2]);
+
+	var c = STRUCT([c0,c1]);
+	return STRUCT(REPLICA(n)([c, R([0,1])([-PI/2])]));
+};
 
 /* Project page drawing functions */
 var planCornerSection = function(){
@@ -559,29 +553,11 @@ var drawDomeComplete = function(){
 	DRAW(centralDome(1,8));
 };
 
-var complete3dCornerSection = function(r){
-	var l = r*SIN(PI/8);
-	var a = r*COS(PI/8);
-
-	var c = cornerSection3d(r);
-	var chap = chapelDome(r);
-	var cDome = centralDomeSection(r).translate([2],[11*l/6]);
-
-	return STRUCT([c, chap, cDome]);
-};
-
-var complete3dChurch = function(r,n){
-	var c0 = complete3dCornerSection(r);
-	var c1 = S([0])([-1])(c0).rotate([0,1],[-PI/2]);
-
-	var c = STRUCT([c0,c1]);
-	return STRUCT(REPLICA(n)([c, R([0,1])([-PI/2])]));
-};
-
 var churchCornerSection = function(){
 	DRAW(complete3dCornerSection(1));
 };
 
 var completeChurch = function(){
+	DRAW(multiLevelChurchPlan(3)(churchPlan(1.25)(.1)));
 	DRAW(complete3dChurch(1,4));
 };
